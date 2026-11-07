@@ -1,0 +1,19 @@
+{
+  "name": "ts-inspector",
+  "version": "0.1.0",
+  "description": "Browser inspector for MPEG-2 transport streams. Open one HTML file, drop a .ts, nothing is uploaded.",
+  "license": "MIT",
+  "type": "module",
+  "private": false,
+  "bin": {
+    "ts-inspector": "bin/ts-inspector.js"
+  },
+  "scripts": {
+    "test": "node --test test",
+    "build": "python3 build.py",
+    "inspect": "node bin/ts-inspector.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

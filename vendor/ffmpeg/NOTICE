@@ -1,0 +1,14 @@
+The files ffmpeg-core.js and ffmpeg-core.wasm in this directory are the
+single-thread build of FFmpeg published as @ffmpeg/core 0.12.6
+(https://github.com/ffmpegwasm/ffmpeg.wasm).
+
+That build is configured with --enable-gpl and without --enable-version3,
+so it is licensed under the GNU General Public License, version 2.0 or
+later. The TS Inspector sources stay under the MIT License. A
+dist/ts-inspector.html that embeds this core is distributed under GPL-2.0
+as a whole, and whoever hosts it must offer the corresponding source from
+the same place. Build with `python3 build.py --no-ffmpeg` to leave the core
+out; that page stays MIT only.
+
+Source for this build: https://github.com/FFmpeg/FFmpeg and
+https://github.com/ffmpegwasm/ffmpeg.wasm/tree/main/packages/core

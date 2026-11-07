@@ -1,0 +1,61 @@
+{
+  "bytes": 2632,
+  "checks": {
+    "TS_sync_loss": 0,
+    "Sync_byte_error": 0,
+    "PAT_error": 0,
+    "Continuity_count_error": 0,
+    "PMT_error": 0,
+    "PID_error": 0,
+    "Transport_error": 0,
+    "CRC_error": 0,
+    "PCR_repetition_error": 0,
+    "PCR_discontinuity_error": 0,
+    "PCR_accuracy_error": 0,
+    "PTS_error": 0,
+    "CAT_error": 0,
+    "Datagram_gap": 0,
+    "NIT_error": 0,
+    "SI_repetition_error": 0,
+    "Unreferenced_PID": 0,
+    "SDT_error": 0,
+    "EIT_error": 0,
+    "RST_error": 0,
+    "TDT_error": 0,
+    "Buffer_error": 0,
+    "Empty_buffer_error": 0,
+    "Data_delay_error": 0
+  },
+  "pcr_max_interval_ms": 10,
+  "pcr_pid": 257,
+  "pids": [
+    {
+      "cc_errs": 0,
+      "kind": "PAT",
+      "type": null,
+      "long": "PAT",
+      "pcr": false,
+      "pid": 0,
+      "scrambled": 0
+    },
+    {
+      "cc_errs": 0,
+      "kind": "PMT",
+      "type": null,
+      "long": "PMT",
+      "pcr": false,
+      "pid": 256,
+      "scrambled": 0
+    },
+    {
+      "cc_errs": 0,
+      "kind": "H.264",
+      "type": 27,
+      "long": "H.264",
+      "pcr": true,
+      "pid": 257,
+      "scrambled": 0
+    }
+  ],
+  "pkts": 14
+}

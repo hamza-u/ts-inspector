@@ -1,0 +1,15 @@
+libklscte35 compiled to WebAssembly for TS Inspector
+===================================================
+
+Source: https://github.com/stoth68000/libklscte35.git
+Commit: a428caef64cd86ba368a613334b6077ecd78c807
+Licence: LGPL-2.1-or-later (see LICENSE.txt in this directory)
+Built with Emscripten, flags in scripts/build_wasm.py.
+
+The files libklscte35.js and libklscte35.wasm here are that build. They are
+bundled into dist/ts-inspector.html, so a distributed page is, as a
+whole, under GPL-2.0. Whoever hosts that page must offer this source
+from the same place. The TS Inspector sources are MIT; build with
+`python3 build.py --no-gpl` to leave these modules, and FFmpeg, out.
+
+Rebuild with: python3 scripts/build_wasm.py --only libklscte35

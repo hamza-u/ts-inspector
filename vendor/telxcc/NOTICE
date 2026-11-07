@@ -1,0 +1,15 @@
+telxcc compiled to WebAssembly for TS Inspector
+==============================================
+
+Source: https://github.com/kanongil/telxcc.git
+Commit: f6b44b3b163407a3d99903f4afa5a0c30c333156
+Licence: GPL-2.0-or-later (see LICENSE.txt in this directory)
+Built with Emscripten, flags in scripts/build_wasm.py.
+
+The files telxcc.js and telxcc.wasm here are that build. They are
+bundled into dist/ts-inspector.html, so a distributed page is, as a
+whole, under GPL-2.0. Whoever hosts that page must offer this source
+from the same place. The TS Inspector sources are MIT; build with
+`python3 build.py --no-gpl` to leave these modules, and FFmpeg, out.
+
+Rebuild with: python3 scripts/build_wasm.py --only telxcc

@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+.DS_Store
+node_modules/
+# Cloned upstream sources for the WebAssembly tools. scripts/build_wasm.py
+# checks them out at pinned commits.
+vendor/src/
+
+# Built by build.py. CI publishes the MIT-only page to GitHub Pages.
+dist/
+.vscode/
+
+# Built and downloaded WebAssembly. Rebuild with scripts/build_wasm.py and
+# scripts/fetch_ffmpeg.py. Only the NOTICE and licence files are tracked.
+vendor/*/*.js
+vendor/*/*.wasm

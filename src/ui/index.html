@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="en" data-theme="auto">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TS Inspector</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http%3A//www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='0' y='0' width='24' height='24' rx='6' fill='%23d6249f' stroke='none'/%3E%3Ccircle cx='10.5' cy='10.5' r='5.4'/%3E%3Cpath d='M14.6 14.6 18.8 18.8'/%3E%3C/svg%3E">
+<script>
+(function () {
+  try {
+    var saved = localStorage.getItem("ts-inspector-theme") || "auto";
+    document.documentElement.setAttribute("data-theme", saved);
+  } catch (err) { /* first visit */ }
+})();
+</script>
+<style>
+:root,
+:root[data-theme="light"] {
+  --bg: #fbfafc;
+  --panel: #ffffff;
+  --panel2: #faf7fb;
+  --ink: #1a1622;
+  --ink2: #6b6478;
+  --grid: #ece7f0;
+  --edge: #d9d2e2;
+  --bad: #fdeaf2;
+  --accent: #d6249f;
+  --accent-ink: #ffffff;
+  --accent2: #fd1d1d;
+  --accent3: #fcb045;
+  --instagram: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+  --shadow: 0 1px 2px rgba(40, 20, 60, 0.06), 0 4px 14px rgba(40, 20, 60, 0.05);
+}
+:root[data-theme="dark"] {
+  --bg: #0b0a0f;
+  --panel: #14121a;
+  --panel2: #1a1722;
+  --ink: #f2eef7;
+  --ink2: #a49bb3;
+  --grid: #262130;
+  --edge: #3a3346;
+  --bad: #3a1d2c;
+  --accent: #e1306c;
+  --accent-ink: #ffffff;
+  --accent2: #fd5949;
+  --accent3: #fdc468;
+  --instagram: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+  --shadow: none;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="auto"] {
+    --bg: #0b0a0f;
+    --panel: #14121a;
+    --panel2: #1a1722;
+    --ink: #f2eef7;
+    --ink2: #a49bb3;
+    --grid: #262130;
+    --edge: #3a3346;
+    --bad: #3a1d2c;
+    --accent: #e1306c;
+    --accent-ink: #ffffff;
+    --accent2: #fd5949;
+    --accent3: #fdc468;
+    --instagram: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+    --shadow: none;
+  }
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 14px/1.5 ui-sans-serif, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: 1240px; margin: 0 auto; padding: 0 24px; }
+header#top {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: var(--panel);
+  border-bottom: 1px solid var(--grid);
+}
+#top .wrap {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+.brand { display: flex; align-items: center; gap: 10px; margin-right: auto; }
+.brand .mark {
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  background: var(--instagram);
+  display: grid;
+  place-items: center;
+  color: #fff;
+  box-shadow: 0 2px 10px rgba(204, 35, 102, 0.35);
+}
+.brand .mark svg { width: 16px; height: 16px; display: block; }
+.brand h1 { font-size: 17px; letter-spacing: -0.01em; margin: 0; font-weight: 700; }
+.brand p { margin: 0; color: var(--ink2); font-size: 12px; }
+h2 { font-size: 13px; margin: 0 0 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink2); font-weight: 650; }
+h3 { font-size: 12px; margin: 14px 0 6px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink2); }
+.sub { color: var(--ink2); margin: 0 0 3px; font-size: 13px; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+button, .filebtn, select {
+  background: var(--panel);
+  color: var(--ink);
+  border: 1px solid var(--edge);
+  border-radius: 7px;
+  padding: 6px 12px;
+  font: inherit;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+select { padding: 5px 8px; }
+button:hover:not(:disabled) { border-color: var(--accent); }
+.filebtn { background: var(--instagram); color: #fff; border-color: transparent; font-weight: 600; }
+.filebtn:hover { filter: brightness(1.06); }
+button:disabled { opacity: 0.45; cursor: default; }
+.iconbtn {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 50%;
+  display: inline-grid;
+  place-items: center;
+  color: var(--ink2);
+  background: transparent;
+  border: 1px solid var(--edge);
+}
+.iconbtn:hover { color: var(--accent); border-color: var(--accent); }
+.iconbtn svg { width: 18px; height: 18px; display: block; }
+.iconbtn .sun { display: none; }
+:root[data-theme="dark"] .iconbtn .moon { display: none; }
+:root[data-theme="dark"] .iconbtn .sun { display: block; }
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="auto"] .iconbtn .moon { display: none; }
+  :root[data-theme="auto"] .iconbtn .sun { display: block; }
+}
+.drop {
+  margin: 24px 0;
+  border: 1px dashed var(--edge);
+  border-radius: 12px;
+  padding: 56px 20px;
+  text-align: center;
+  color: var(--ink2);
+  background: var(--panel);
+}
+.drop b { display: block; color: var(--ink); font-size: 15px; margin-bottom: 4px; }
+#progress { margin: 16px 0; }
+.track { height: 6px; background: var(--grid); border-radius: 99px; overflow: hidden; }
+#bar { height: 100%; width: 0; background: var(--instagram); transition: width 120ms linear; }
+section {
+  background: var(--panel);
+  border: 1px solid var(--grid);
+  border-radius: 10px;
+  padding: 16px 18px;
+  margin: 0 0 16px;
+  box-shadow: var(--shadow);
+}
+#summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); gap: 10px; box-shadow: none; padding: 0; border: 0; background: none; }
+.chip { background: var(--panel); border: 1px solid var(--grid); border-radius: 9px; padding: 10px 12px; border-top: 2px solid transparent; }
+.chip:nth-child(3n+1) { border-top-color: var(--accent3); }
+.chip:nth-child(3n+2) { border-top-color: var(--accent); }
+.chip:nth-child(3n) { border-top-color: var(--accent2); }
+.chip span { display: block; color: var(--ink2); font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
+.chip b { font-size: 16px; font-variant-numeric: tabular-nums; font-weight: 600; }
+.tableWrap { max-height: 460px; overflow: auto; border: 1px solid var(--grid); border-radius: 8px; }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; font-size: 12.5px; }
+th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+th { color: var(--ink2); font-weight: 600; position: sticky; top: 0; background: var(--panel2); z-index: 1; }
+tbody tr:nth-child(even) { background: var(--panel2); }
+tbody tr:hover { background: var(--grid); }
+tr.bad { background: var(--bad) !important; }
+tr[data-pkt] { cursor: pointer; }
+canvas { width: 100%; display: block; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.leg {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; border-radius: 99px; padding: 3px 10px;
+}
+.leg.off { opacity: 0.4; text-decoration: line-through; }
+#hex {
+  font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  overflow: auto;
+  background: var(--panel2);
+  padding: 10px;
+  border: 1px solid var(--grid);
+  border-radius: 8px;
+  margin: 0;
+}
+#pktIndex { width: 8em; padding: 5px 7px; font: inherit; border: 1px solid var(--edge); border-radius: 7px; background: var(--panel); color: var(--ink); }
+#tabs {
+  display: flex;
+  gap: 2px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--grid);
+  margin: 0 0 16px;
+  scrollbar-width: thin;
+}
+#tabs button {
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: none;
+  padding: 9px 12px;
+  color: var(--ink2);
+  font-size: 13px;
+  white-space: nowrap;
+}
+#tabs button:hover { color: var(--ink); }
+#tabs button.on {
+  color: var(--accent);
+  font-weight: 600;
+  border-bottom-color: var(--accent);
+  background: linear-gradient(180deg, transparent 62%, rgba(214, 36, 159, 0.12) 100%);
+}
+#timelineBar {
+  position: sticky;
+  bottom: 0;
+  background: var(--panel);
+  border-top: 1px solid var(--grid);
+  box-shadow: 0 -6px 16px rgba(0, 0, 0, 0.06);
+  padding: 8px 0 4px;
+  z-index: 2;
+}
+/* On its own tab the bar is part of the page, not a sticky footer over it. */
+#timelineBar.page {
+  position: static;
+  border-top: 0;
+  box-shadow: none;
+  padding: 0;
+  margin: 0 0 16px;
+}
+#timelineBar.page #timelineHead { margin: 0 0 6px; }
+#timelineBar.page #timelineGrip { display: none; }
+#timelineHead { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+#timelineHead strong { font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink2); }
+#timelineGrip {
+  height: 10px;
+  margin: -4px 0 2px;
+  cursor: ns-resize;
+  display: grid;
+  place-items: center;
+  touch-action: none;
+}
+#timelineGrip i { display: block; width: 46px; height: 4px; border-radius: 99px; background: var(--edge); }
+#timelineGrip:hover i { background: var(--accent); }
+#mediaTimeline { width: 100%; height: 300px; cursor: crosshair; touch-action: none; outline: none; border-radius: 6px; }
+#mediaTimeline:focus-visible { box-shadow: 0 0 0 2px var(--accent); }
+#timelineDetail { white-space: pre-wrap; max-height: 6.5em; overflow: auto; font-size: 12px; }
+.zoombox { display: inline-flex; align-items: center; gap: 2px; border: 1px solid var(--edge); border-radius: 7px; overflow: hidden; }
+.zoombox button { border: 0; border-radius: 0; padding: 5px 9px; background: none; }
+.zoombox button + button { border-left: 1px solid var(--edge); }
+#timelineSpan { font-variant-numeric: tabular-nums; color: var(--ink2); font-size: 12px; padding: 0 8px; min-width: 8.5em; text-align: center; }
+#timelineSub { max-width: 320px; height: 80px; background: #2a2a2a; border-radius: 6px; image-rendering: pixelated; }
+#pcr, #pts { height: 220px; }
+#rate { height: 320px; cursor: crosshair; }
+#esFrames, #hrdFull, #hrdLead, #tstdChart, #pcrHist { height: 220px; }
+#subCanvas { width: 100%; max-width: 720px; height: 240px; background: #3a3a3a; border-radius: 6px; image-rendering: pixelated; object-fit: contain; }
+.epg { position: relative; height: 36px; background: var(--panel2); border: 1px solid var(--grid); border-radius: 6px; margin: 4px 0 10px; }
+.epg i { position: absolute; top: 6px; height: 24px; background: var(--instagram); border-radius: 4px; color: #fff; font-size: 11px; line-height: 24px; padding: 0 6px; overflow: hidden; white-space: nowrap; }
+details { margin: 6px 0; border-bottom: 1px solid var(--grid); padding-bottom: 6px; }
+summary { cursor: pointer; }
+footer { color: var(--ink2); font-size: 11.5px; padding: 12px 24px 96px; max-width: 1240px; margin: 0 auto; }
+</style>
+</head>
+<body>
+<header id="top">
+  <div class="wrap">
+    <div class="brand">
+      <span class="mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/><path d="M7 10.5h1.5l1-2 1.5 4 1-2H14"/></svg>
+      </span>
+      <h1>TS Inspector</h1>
+      <p>Transport stream analysis in the browser. Nothing is uploaded.</p>
+    </div>
+    <div class="row">
+      <label class="filebtn">Import .ts or report<input id="file" type="file" accept=".ts,.m2ts,.trp,.json,video/mp2t,application/json" hidden></label>
+      <button id="json" type="button" disabled>Export JSON</button>
+      <button id="csv" type="button" disabled>Export CSV</button>
+      <button id="html" type="button" disabled>Export report</button>
+      <button id="cancel" type="button" hidden>Cancel</button>
+      <button id="theme" type="button" class="iconbtn" aria-label="Switch between light and dark theme" title="Switch theme">
+        <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A8.5 8.5 0 1 1 11.2 3a6.8 6.8 0 0 0 9.8 9.8Z"/></svg>
+        <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+<main class="wrap">
+  <div id="drop" class="drop">
+    <b>Drop a .ts file here</b>
+    or use Import. A report JSON from the command line also opens here.
+  </div>
+  <div id="progress" hidden>
+    <div class="track"><div id="bar"></div></div>
+    <p id="plabel" class="sub"></p>
+  </div>
+  <div id="out" hidden>
+    <nav id="tabs">
+      <button type="button" data-tab="overview" class="on">Overview</button>
+      <button type="button" data-tab="timeline">Timeline</button>
+      <button type="button" data-tab="pids">PIDs / PSI</button>
+      <button type="button" data-tab="si">SI / EPG</button>
+      <button type="button" data-tab="bitrate">Bitrate</button>
+      <button type="button" data-tab="tr290">TR 101 290</button>
+      <button type="button" data-tab="timing">Timing / PCR</button>
+      <button type="button" data-tab="video">Video ES</button>
+      <button type="button" data-tab="hrd">HRD / T-STD</button>
+      <button type="button" data-tab="subs">Subtitles</button>
+      <button type="button" data-tab="packet">Packet</button>
+      <button type="button" data-tab="report">Report</button>
+    </nav>
+    <section data-panel="timeline">
+      <h2>Timeline</h2>
+      <p class="sub">Drag to pan, pinch or Ctrl/&#8984;-wheel to zoom, Shift-drag to select a range. The bar sits under this tab so the plots on the other tabs get the full height.</p>
+    </section>
+    <section id="summary" data-panel="overview"></section>
+    <section data-panel="overview">
+      <h2>What this file is</h2>
+      <div id="overview"></div>
+    </section>
+    <section data-panel="pids">
+      <h2>PIDs</h2>
+      <div id="pids"></div>
+    </section>
+    <section data-panel="pids">
+      <h2>PSI / SI and SCTE-35</h2>
+      <div id="psi"></div>
+      <h2>SCTE-35 cross-check</h2>
+      <p id="scteNote" class="sub">Sections are parsed twice: once here, once by the bundled SCTE-35 library. A row appears only where the two disagree.</p>
+      <div id="scteCheck"></div>
+    </section>
+    <section data-panel="si">
+      <h2>SI</h2>
+      <div id="siTree"></div>
+      <h2>EPG</h2>
+      <div id="epg"></div>
+    </section>
+    <section data-panel="bitrate">
+      <h2>Bitrate</h2>
+      <p class="sub">Equal-packet bins times the PCR mux rate. Drag to zoom, double-click to reset, click a name to hide it.</p>
+      <canvas id="rate"></canvas>
+      <div id="legend" class="legend"></div>
+    </section>
+    <section data-panel="tr290">
+      <h2>TR 101 290</h2>
+      <div id="checks"></div>
+      <canvas id="errTimeline"></canvas>
+      <div id="events"></div>
+    </section>
+    <section data-panel="timing">
+      <h2>Timing</h2>
+      <canvas id="pcr"></canvas>
+      <canvas id="pts"></canvas>
+      <h2>PCR accuracy</h2>
+      <p id="pcrNote" class="sub"></p>
+      <canvas id="pcrHist"></canvas>
+    </section>
+    <section data-panel="video">
+      <h2>H.264 elementary stream</h2>
+      <div id="esTree"></div>
+      <canvas id="esFrames"></canvas>
+      <div id="esGops"></div>
+    </section>
+    <section data-panel="hrd">
+      <h2>H.264 HRD</h2>
+      <p id="hrdNote" class="sub"></p>
+      <canvas id="hrdFull"></canvas>
+      <canvas id="hrdLead"></canvas>
+      <div id="hrdJoins"></div>
+      <h2>T-STD</h2>
+      <p id="tstdNote" class="sub"></p>
+      <canvas id="tstdChart"></canvas>
+      <div id="tstdEvents"></div>
+    </section>
+    <section data-panel="subs">
+      <h2>Closed captions (CEA-608 / CEA-708)</h2>
+      <p id="ccNote" class="sub">Reading the captions carried in the H.264 SEI messages.</p>
+      <div class="row">
+        <button id="ccRun" type="button" disabled>Extract captions</button>
+        <button id="ccSave" type="button" disabled>Download .srt</button>
+      </div>
+      <div id="ccList"></div>
+      <h2>Teletext</h2>
+      <div id="subList"></div>
+      <pre id="subText" class="sub"></pre>
+      <div class="row">
+        <button id="ttRun" type="button" disabled>Extract teletext to .srt</button>
+        <button id="ttSave" type="button" disabled>Download .srt</button>
+      </div>
+      <div id="ttList"></div>
+      <h2>DVB subtitle</h2>
+      <p id="subNote" class="sub"></p>
+      <canvas id="subCanvas"></canvas>
+    </section>
+    <section data-panel="packet">
+      <h2>Packet</h2>
+      <div class="row">
+        <input id="pktIndex" type="number" min="0" value="0">
+        <button id="pktGo" type="button">Show</button>
+      </div>
+      <p id="pktSum"></p>
+      <pre id="hex"></pre>
+    </section>
+    <section data-panel="report">
+      <h2>Compliance</h2>
+      <p class="sub">Pass, fail, or not measured. Not a conformance certificate.</p>
+      <div id="reportTable"></div>
+    </section>
+    <div id="timelineBar" hidden>
+      <div class="wrap">
+        <div id="timelineHead">
+          <strong>Timeline</strong>
+          <span class="row">
+            <label class="sub" for="thumbCount">Thumbnails</label>
+            <select id="thumbCount">
+              <option value="10">10</option>
+              <option value="12" selected>12</option>
+              <option value="15">15</option>
+            </select>
+            <button id="thumbLoad" type="button">Load I-frame thumbnails</button>
+          </span>
+          <span class="zoombox">
+            <button id="zoomOut" type="button" title="Zoom out (or scroll down)" aria-label="Zoom out">&minus;</button>
+            <span id="timelineSpan">full file</span>
+            <button id="zoomIn" type="button" title="Zoom in (or scroll up)" aria-label="Zoom in">+</button>
+            <button id="zoomReset" type="button" title="Reset zoom (or double-click)">Fit</button>
+          </span>
+          <span class="legend" id="cueLegend"></span>
+        </div>
+        <div id="timelineChips" class="legend"></div>
+        <canvas id="mediaTimeline" tabindex="0" aria-label="Media timeline. Scroll or pinch to zoom, drag to pan, shift-drag to select a range."></canvas>
+        <div id="timelineGrip" title="Drag to resize the timeline" aria-hidden="true"><i></i></div>
+        <p id="timelineDetail" class="sub"></p>
+        <canvas id="timelineSub" hidden></canvas>
+      </div>
+    </div>
+  </div>
+</main>
+<footer>TR 101 290 priorities 1 to 3, H.264 Annex C and H.222.0 2.14.3.1, on a PCR clock. Not a conformance certificate. PCR_OJ and drift need arrival time. HRD and T-STD cover H.264 only. CAT is listed and not raised.</footer>
+<script type="module" src="./main.js"></script>
+</body>
+</html>

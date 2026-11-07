@@ -22,6 +22,7 @@ Plain JavaScript (ES modules), no bundler, no npm dependencies. Python is only f
 | `scripts/fetch_ffmpeg.py` | Downloads the FFmpeg core to `vendor/ffmpeg/`. |
 | `scripts/make_sample.py` | Builds `samples/big-buck-bunny.ts` from the Blender release. Needs ffmpeg. |
 | `scripts/screenshot.mjs` | Captures `docs/screenshot.png` with headless Chrome. |
+| `scripts/release.py` | Builds the release files: both pages, the GPL source archive, and checksums. |
 | `samples/` | The demo stream embedded in the page, and its CC BY 3.0 NOTICE. |
 | `test/` | `node:test` suites. `test/golden/` holds the expected results for each fixture. |
 | `vendor/` | NOTICE and licence files for the WebAssembly programs. The built `.js` and `.wasm` files and `vendor/src/` (upstream clones) are not tracked. |

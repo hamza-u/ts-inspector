@@ -78,7 +78,7 @@ python3 scripts/fetch_ffmpeg.py    # vendor/ffmpeg
 python3 build.py                   # dist/ts-inspector.html, about 44 MB
 ```
 
-A full page is GPL-2.0. See [License](#license).
+Or download `ts-inspector-full.html` from [Releases](https://github.com/hamza-u/ts-inspector/releases), with its source archive. A full page is GPL-2.0. See [License](#license).
 
 ## Develop
 

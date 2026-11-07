@@ -20,6 +20,7 @@ const IDS = [
   "timelineSub", "thumbCount", "thumbLoad", "zoomReset", "zoomIn", "zoomOut", "zoomSpan",
   "timelineSpan", "timelineGrip", "cueLegend", "theme", "tabs",
   "ccNote", "ccRun", "ccSave", "ccList", "ttRun", "ttSave", "ttList", "scteCheck", "scteNote",
+  "sample", "sampleRow",
 ];
 
 function stubPage() {
@@ -331,6 +332,47 @@ test("the theme button is a single icon, and light and dark both define the pink
   assert.ok(html.includes("--accent: #d6249f"));
   assert.ok(html.includes("--accent: #e1306c"));
   assert.match(html, /\.filebtn\s*\{[^}]*--instagram/);
+});
+
+test("the sample button opens the embedded stream, and a build without the media core disables stills and audio", async () => {
+  const { doc, els } = stubPage();
+  stubWindow(doc);
+  const bytes = readFileSync(root + "/samples/big-buck-bunny.ts");
+  const report = inspectBytes(bytes);
+  let posted = null;
+  const worker = {
+    onmessage: null,
+    terminate() {},
+    postMessage(msg) {
+      posted = msg;
+      setTimeout(() => {
+        if (this.onmessage) this.onmessage({ data: { type: "report", report } });
+      }, 0);
+    },
+  };
+  els.get("sampleRow").hidden = true;
+  mount(doc, {
+    createWorker: () => worker,
+    createDecoder: () => null,
+    createTools: () => null,
+    hasMediaCore: false,
+    sample: { name: "big-buck-bunny.ts", b64: bytes.toString("base64") },
+  });
+  assert.equal(els.get("sampleRow").hidden, false);
+  assert.equal(els.get("thumbLoad").disabled, true);
+  assert.equal(els.get("thumbCount").disabled, true);
+  els.get("sample").onclick();
+  assert.equal(posted.file.name, "big-buck-bunny.ts");
+  assert.equal(posted.file.size, bytes.length);
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  const chips = els.get("timelineChips").children;
+  const audio = chips.find((chip) => chip.textContent.startsWith("AAC"));
+  assert.ok(audio, "no audio chip for the sample");
+  assert.equal(audio.disabled, true);
+  assert.match(audio.title, /full build/);
+  for (const chip of chips) {
+    if (chip.disabled) assert.match(chip.textContent, /stills|AAC|audio/);
+  }
 });
 
 test("a build without the media core disables the thumbnail control", () => {

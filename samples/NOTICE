@@ -1,0 +1,18 @@
+big-buck-bunny.ts
+=================
+
+A 10-second excerpt (88 s to 98 s) of Big Buck Bunny.
+
+Big Buck Bunny is (c) copyright 2008, Blender Foundation,
+www.bigbuckbunny.org. It is licensed under the Creative Commons
+Attribution 3.0 licence: https://creativecommons.org/licenses/by/3.0/
+
+Source: https://download.blender.org/peach/bigbuckbunny_movies/BigBuckBunny_640x360.m4v.zip
+(SHA-256 7118242b6728d40c871479c5b3c0f0fb27d748089df15d7f1b469f297c74a2d6)
+
+Changes: scaled to 320x180 at 25 fps, re-encoded to H.264 and AAC,
+multiplexed into an MPEG-2 transport stream, and given a NIT, EIT
+present/following, TDT, and two SCTE-35 time_signal cues. The Blender
+Foundation does not endorse this project or this use.
+
+Rebuild with: python3 scripts/make_sample.py

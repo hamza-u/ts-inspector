@@ -154,6 +154,9 @@ button:disabled { opacity: 0.45; cursor: default; }
   background: var(--panel);
 }
 .drop b { display: block; color: var(--ink); font-size: 15px; margin-bottom: 4px; }
+.sample { margin: 20px 0 0; }
+.sample .filebtn { cursor: pointer; }
+.sample .sub { display: block; margin-top: 8px; font-size: 12px; }
 button:disabled { opacity: 0.5; cursor: not-allowed; }
 #progress { margin: 16px 0; }
 .track { height: 6px; background: var(--grid); border-radius: 99px; overflow: hidden; }
@@ -300,6 +303,10 @@ footer { color: var(--ink2); font-size: 11.5px; padding: 12px 24px 96px; max-wid
   <div id="drop" class="drop">
     <b>Drop a .ts file here</b>
     or use Import. A report JSON from the command line also opens here.
+    <p id="sampleRow" class="sample" hidden>
+      <button id="sample" type="button" class="filebtn">Try the sample stream</button>
+      <span class="sub">10 seconds of Big Buck Bunny with DVB SI and SCTE-35 cues. &copy; 2008 Blender Foundation, www.bigbuckbunny.org, CC BY 3.0.</span>
+    </p>
   </div>
   <div id="progress" hidden>
     <div class="track"><div id="bar"></div></div>

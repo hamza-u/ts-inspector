@@ -18,6 +18,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 UI = ROOT / "src" / "ui"
 FFMPEG = ROOT / "vendor" / "ffmpeg"
+# Made by scripts/make_sample.py from Big Buck Bunny (CC BY 3.0).
+SAMPLE = ROOT / "samples" / "big-buck-bunny.ts"
+SAMPLE_NOTICE = ("Sample stream: a 10-second excerpt of Big Buck Bunny, (c) copyright 2008,\n"
+                 "Blender Foundation, www.bigbuckbunny.org, licensed under Creative Commons\n"
+                 "Attribution 3.0 (creativecommons.org/licenses/by/3.0/). Re-encoded, with\n"
+                 "DVB SI and SCTE-35 added. See samples/NOTICE.")
 
 # The wasm tools, in the order tools-worker.js creates them. Each entry is the
 # vendor folder, the factory name in the loader, and the licence it carries.
@@ -142,9 +148,18 @@ def tools_boot(include: bool) -> str:
 MIT_TEXT = (ROOT / "LICENSE").read_text()
 
 
-def licence_header(include_ffmpeg: bool, include_tools: bool) -> str:
+def sample_boot(include: bool) -> str:
+    if not include:
+        return ""
+    return ("  sample: { name: \"" + SAMPLE.name + "\", b64: \""
+            + base64.b64encode(SAMPLE.read_bytes()).decode("ascii") + "\" },\n")
+
+
+def licence_header(include_ffmpeg: bool, include_tools: bool, include_sample: bool = False) -> str:
     """Comment placed at the top of the page: one file, so it carries its notices."""
     lines = ["TS Inspector", "", MIT_TEXT.strip(), ""]
+    if include_sample:
+        lines += [SAMPLE_NOTICE, ""]
     bundled = []
     if include_ffmpeg:
         bundled.append("FFmpeg core (@ffmpeg/core 0.12.6), " + FFMPEG_LICENCE
@@ -171,8 +186,10 @@ def licence_header(include_ffmpeg: bool, include_tools: bool) -> str:
     return "<!--\n" + body + "\n-->\n"
 
 
-def build(include_ffmpeg: bool = True, include_tools: bool = True, out: Path | None = None) -> Path:
+def build(include_ffmpeg: bool = True, include_tools: bool = True, out: Path | None = None,
+          include_sample: bool = True) -> Path:
     include_tools = include_tools and tools_present()
+    include_sample = include_sample and SAMPLE.is_file()
     worker = "".join(strip_module((ROOT / "src" / "worker" / name).read_text(), name)
                      for name in WORKER_FILES)
     page = "".join(strip_module(page_text(name), name) for name in PAGE_FILES)
@@ -187,6 +204,7 @@ def build(include_ffmpeg: bool = True, include_tools: bool = True, out: Path | N
         + "  },\n"
         + ffmpeg_boot(include_ffmpeg)
         + tools_boot(include_tools)
+        + sample_boot(include_sample)
         + "});\n"
     )
     needle = '<script type="module" src="./main.js"></script>'
@@ -196,7 +214,7 @@ def build(include_ffmpeg: bool = True, include_tools: bool = True, out: Path | N
     doctype = "<!doctype html>\n"
     if not html.startswith(doctype):
         raise SystemExit("index.html must start with " + doctype.strip())
-    html = doctype + licence_header(include_ffmpeg, include_tools) + html[len(doctype):]
+    html = doctype + licence_header(include_ffmpeg, include_tools, include_sample) + html[len(doctype):]
     # The embedded payloads are base64. Check the page and the inspector worker,
     # which are the parts we author, before those payloads are considered.
     authored = (page + worker + (UI / "index.html").read_text()
@@ -224,10 +242,12 @@ if __name__ == "__main__":
     parser.add_argument("--no-ffmpeg", action="store_true", help="omit the embedded FFmpeg core")
     parser.add_argument("--no-gpl", action="store_true",
                         help="omit FFmpeg and the wasm tools, leaving an MIT-only page")
+    parser.add_argument("--no-sample", action="store_true", help="omit the embedded sample stream")
     parser.add_argument("--out", help="write somewhere other than dist/ts-inspector.html")
     args = parser.parse_args()
     have_core = (FFMPEG / "ffmpeg-core.js").is_file() and (FFMPEG / "ffmpeg-core.wasm").is_file()
     path = build(include_ffmpeg=have_core and not (args.no_ffmpeg or args.no_gpl),
                  include_tools=tools_present() and not args.no_gpl,
-                 out=Path(args.out).resolve() if args.out else None)
+                 out=Path(args.out).resolve() if args.out else None,
+                 include_sample=not args.no_sample)
     print("wrote %s (%d bytes)" % (path, path.stat().st_size))

@@ -68,7 +68,10 @@ test("the built HTML file does not call the network", () => {
   const built = spawnSync("python3", ["build.py", "--out", out], { cwd: root, encoding: "utf8" });
   assert.equal(built.status, 0, built.stderr);
   const html = readFileSync(out, "utf8");
-  const payload = html.indexOf("wasmB64: \"");
+  // Base64 payloads (the media core and the sample stream) are not authored
+  // text; the checks below stop where the first one starts.
+  const marks = [html.indexOf("wasmB64: \""), html.indexOf("sample: { name:")].filter((i) => i !== -1);
+  const payload = marks.length ? Math.min(...marks) : -1;
   const authored = payload === -1 ? html : html.slice(0, payload);
   assert.equal(authored.includes("fonts.googleapis"), false);
   assert.equal(authored.includes("http://"), false);
@@ -79,7 +82,7 @@ test("the built HTML file does not call the network", () => {
   for (const name of denied) {
     assert.equal(authored.toLowerCase().includes(name.toLowerCase()), false, "denylisted name in the page");
   }
-  if (payload !== -1) assert.ok(html.length > 5_000_000);
+  if (html.includes("wasmB64: \"")) assert.ok(html.length > 5_000_000);
   assert.ok(html.includes("TS Inspector"));
   assert.ok(html.includes("WORKER_SRC"));
   assert.equal(html.includes("type=\"module\""), false);

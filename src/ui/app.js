@@ -1085,6 +1085,18 @@ export function mount(doc, opts) {
     worker.postMessage({ type: "analyze", file });
   }
 
+  // The sample stream is embedded by build.py as base64, so it opens from
+  // file:// with no fetch. #sample in the address opens it on load.
+  function openSample() {
+    const raw = atob(opts.sample.b64);
+    const bytes = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+    analyze(new File([bytes], opts.sample.name, { type: "video/mp2t" }));
+  }
+  if (opts.sample && el(doc, "sample")) {
+    el(doc, "sampleRow").hidden = false;
+    el(doc, "sample").onclick = () => openSample();
+  }
   syncMediaControls();
 
   fileInput.onchange = () => {
@@ -1472,4 +1484,6 @@ export function mount(doc, opts) {
   onThumbnailLoad(() => drawTimelineBar());
   chooseTheme(readTheme(doc));
   selectTab("overview");
+  const where = doc.defaultView && doc.defaultView.location;
+  if (opts.sample && where && where.hash === "#sample") openSample();
 }

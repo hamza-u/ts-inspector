@@ -82,7 +82,7 @@ def page_text(name: str) -> str:
 
 def ffmpeg_boot(include: bool) -> str:
     if not include:
-        return "  createDecoder() { return null; },\n"
+        return "  hasMediaCore: false,\n  createDecoder() { return null; },\n"
     core = (FFMPEG / "ffmpeg-core.js").read_text()
     wasm = (FFMPEG / "ffmpeg-core.wasm").read_bytes()
     # The core is concatenated into the worker source. importScripts of a blob

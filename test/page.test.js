@@ -332,3 +332,19 @@ test("the theme button is a single icon, and light and dark both define the pink
   assert.ok(html.includes("--accent: #e1306c"));
   assert.match(html, /\.filebtn\s*\{[^}]*--instagram/);
 });
+
+test("a build without the media core disables the thumbnail control", () => {
+  const { doc, els } = stubPage();
+  stubWindow(doc);
+  mount(doc, { createWorker: () => ({ postMessage() {}, terminate() {} }), createDecoder: () => null, hasMediaCore: false });
+  assert.equal(els.get("thumbLoad").disabled, true);
+  assert.equal(els.get("thumbCount").disabled, true);
+  assert.match(els.get("thumbLoad").title, /full build/);
+});
+
+test("a build with the media core keeps stills and audio enabled", () => {
+  const { doc, els } = stubPage();
+  stubWindow(doc);
+  mount(doc, { createWorker: () => ({ postMessage() {}, terminate() {} }), createDecoder: () => null });
+  assert.equal(els.get("thumbLoad").disabled, false);
+});

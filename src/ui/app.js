@@ -40,6 +40,10 @@ export function mount(doc, opts) {
   let decoder = null;
   let tooler = null;
   const toolState = { captions: null, teletext: [], scte: null };
+  // A build made with --no-ffmpeg or --no-gpl has no media core. Stills and
+  // loudness then come only from a report that already carries them.
+  const canDecode = opts.hasMediaCore !== false;
+  const MEDIA_ONLY = "Needs the full build, which embeds the FFmpeg core";
   const view = { x0: 0, x1: 0, hidden: new Set(), hover: null, drag: null };
   const timelineView = { t0: 0, t1: 1, hidden: new Set(), drag: null, hoverX: null, height: 0, manual: false };
   function chooseTheme(choice) {
@@ -721,6 +725,11 @@ export function mount(doc, opts) {
     timelineView.t0 = 0;
     timelineView.t1 = report.summary.durationS || 1;
     timelineView.hidden = new Set();
+    if (!canDecode) {
+      for (const key of allLaneKeys(report)) {
+        if (needsCore(key)) timelineView.hidden.add(key);
+      }
+    }
     timelineView.height = 0;
     timelineView.manual = false;
     toolState.captions = null;
@@ -750,6 +759,27 @@ export function mount(doc, opts) {
       if (report.thumbnails && report.thumbnails.length) drawTimelineBar();
     }
     showPacket(0);
+  }
+
+  // A lane that only the media core can fill, and that has no data yet.
+  function needsCore(key) {
+    if (canDecode || !report) return false;
+    const [kind, pid] = key.split(":");
+    if (kind === "thumbs") return !(report.thumbnails || []).length;
+    if (kind === "audio") {
+      return !(report.audio || []).some((row) => row.pid === Number(pid) && row.peak && row.peak.length);
+    }
+    return false;
+  }
+
+  function syncMediaControls() {
+    const load = el(doc, "thumbLoad");
+    const count = el(doc, "thumbCount");
+    if (!load) return;
+    load.disabled = !canDecode;
+    if (count) count.disabled = !canDecode;
+    load.title = canDecode ? "" : MEDIA_ONLY;
+    load.textContent = canDecode ? "Load I-frame thumbnails" : "Thumbnails need the full build";
   }
 
   function laneLabel(key) {
@@ -835,6 +865,10 @@ export function mount(doc, opts) {
         button.type = "button";
         button.className = "leg " + (timelineView.hidden.has(key) ? "off" : "on");
         button.textContent = laneLabel(key);
+        if (needsCore(key)) {
+          button.disabled = true;
+          button.title = MEDIA_ONLY;
+        }
         button.onclick = () => {
           if (timelineView.hidden.has(key)) timelineView.hidden.delete(key);
           else timelineView.hidden.add(key);
@@ -1050,6 +1084,8 @@ export function mount(doc, opts) {
     };
     worker.postMessage({ type: "analyze", file });
   }
+
+  syncMediaControls();
 
   fileInput.onchange = () => {
     const picked = fileInput.files && fileInput.files[0];

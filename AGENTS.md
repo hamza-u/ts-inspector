@@ -20,6 +20,9 @@ Plain JavaScript (ES modules), no bundler, no npm dependencies. Python is only f
 | `scripts/make_fixtures.py` | Writes `test/fixtures/*.ts`. |
 | `scripts/build_wasm.py`, `scripts/wasm/` | Compile CCExtractor, telxcc and libklscte35 to `vendor/<name>/`. Needs Emscripten. |
 | `scripts/fetch_ffmpeg.py` | Downloads the FFmpeg core to `vendor/ffmpeg/`. |
+| `scripts/make_sample.py` | Builds `samples/big-buck-bunny.ts` from the Blender release. Needs ffmpeg. |
+| `scripts/screenshot.mjs` | Captures `docs/screenshot.png` with headless Chrome. |
+| `samples/` | The demo stream embedded in the page, and its CC BY 3.0 NOTICE. |
 | `test/` | `node:test` suites. `test/golden/` holds the expected results for each fixture. |
 | `vendor/` | NOTICE and licence files for the WebAssembly programs. The built `.js` and `.wasm` files and `vendor/src/` (upstream clones) are not tracked. |
 | `dist/` | Build output. Not tracked. |
@@ -33,6 +36,7 @@ node --test test                  # all tests, about 3 s
 python3 build.py --no-gpl         # MIT-only page, about 300 kB
 python3 build.py                  # full page; embeds whatever is in vendor/
 python3 scripts/make_fixtures.py  # regenerate fixtures after a generator change
+python3 scripts/make_sample.py    # regenerate the sample stream
 node bin/ts-inspector.js FILE.ts  # command-line analysis
 ```
 

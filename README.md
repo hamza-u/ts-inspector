@@ -2,6 +2,10 @@
 
 An MPEG-2 transport-stream inspector in one HTML file. Drop a `.ts` on it and read the PIDs, PSI/SI, SCTE-35, bitrate, timing, buffer models, and TR 101 290 checks. Nothing is uploaded.
 
+**[Open it in your browser](https://hamza-u.github.io/ts-inspector/)**, then press **Try the sample stream**, or [open it with the sample loaded](https://hamza-u.github.io/ts-inspector/#sample).
+
+![TS Inspector with the sample stream loaded: summary figures, file details, and a timeline with SCTE-35 cue-out and cue-in markers](docs/screenshot.png)
+
 - **Local only.** No server, no network calls. Parsing runs in a Web Worker.
 - **One file.** Works from `file://` or any static host.
 - **MIT.** See [License](#license).
@@ -17,9 +21,13 @@ python3 build.py --no-gpl
 open dist/ts-inspector.html        # Linux: xdg-open
 ```
 
-Drop a `.ts`, or use **Import .ts**. Click an error row to jump to its packet. **Export JSON**, **Export CSV**, and **Export report** save to your machine.
+Drop a `.ts`, use **Import .ts**, or press **Try the sample stream**. Click an error row to jump to its packet. **Export JSON**, **Export CSV**, and **Export report** save to your machine.
 
-`--no-gpl` builds the MIT-only page (about 300 kB). For captions, teletext SRT, the SCTE-35 cross-check, stills, and loudness, see [Full build](#full-build).
+`--no-gpl` builds the MIT-only page: about 1.2 MB with the sample, 300 kB with `--no-sample`. For captions, teletext SRT, the SCTE-35 cross-check, stills, and loudness, see [Full build](#full-build). Those controls are disabled on the MIT-only page.
+
+## Sample stream
+
+`samples/big-buck-bunny.ts` is 10 seconds of [Big Buck Bunny](https://www.bigbuckbunny.org), (c) 2008 Blender Foundation, [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/). It is H.264 and AAC at a constant 520 kb/s, with NIT, SDT, EIT, TDT, and a SCTE-35 cue-out and cue-in. It fails no check. `python3 scripts/make_sample.py` rebuilds it from the official Blender release, byte for byte with the same FFmpeg and x264 versions. See [`samples/NOTICE`](samples/NOTICE).
 
 ## What it shows
 
@@ -77,6 +85,8 @@ A full page is GPL-2.0. See [License](#license).
 ```sh
 node --test test
 python3 scripts/make_fixtures.py   # regenerate test/fixtures
+python3 scripts/make_sample.py     # regenerate the sample (needs ffmpeg)
+node scripts/screenshot.mjs        # regenerate docs/screenshot.png (needs Chrome)
 ```
 
 `test/golden/` holds the expected results for each fixture. Tests that need `vendor/` skip without it.
@@ -101,5 +111,7 @@ A full build also embeds:
 | libklscte35 | LGPL-2.1-or-later |
 
 These ship in one file, so a full page is distributed under GPL-2.0. If you host one, offer the corresponding source from the same place: this repository and each upstream at the commit in `vendor/<name>/NOTICE`. The `--no-gpl` page is MIT only, and is what GitHub Pages publishes. [ADR-0001](docs/adr/0001-mit-licence.md) explains the choice.
+
+The sample stream is CC BY 3.0, as above. Every built page names it in its header comment.
 
 ISO, ETSI, and SCTE specifications are not included. Get them from their publishers.

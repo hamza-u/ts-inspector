@@ -3,6 +3,24 @@
   "version": "0.1.0",
   "description": "Browser inspector for MPEG-2 transport streams. Open one HTML file, drop a .ts, nothing is uploaded.",
   "license": "MIT",
+  "homepage": "https://hamza-u.github.io/ts-inspector/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hamza-u/ts-inspector.git"
+  },
+  "bugs": {
+    "url": "https://github.com/hamza-u/ts-inspector/issues"
+  },
+  "keywords": [
+    "mpeg-ts",
+    "transport-stream",
+    "scte-35",
+    "tr-101-290",
+    "dvb",
+    "h264",
+    "broadcast",
+    "webassembly"
+  ],
   "type": "module",
   "private": false,
   "bin": {

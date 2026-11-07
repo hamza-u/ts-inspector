@@ -54,6 +54,25 @@ test("a cue pair yields one CUE-OUT and one CUE-IN on the bar", () => {
   assert.equal(cues[0].breakMs, 30000);
 });
 
+test("a cue sits at its splice time, not where its section arrives", () => {
+  const pair = inspectBytes(readFileSync(root + "/test/fixtures/cue_pair.ts"));
+  const [out, back] = pair.timeline.scte;
+  assert.ok(Math.abs(out.sentT - 0.2) < 0.001, "out sent at " + out.sentT);
+  assert.ok(Math.abs(out.spliceT - 0.4) < 0.001, "out splices at " + out.spliceT);
+  assert.equal(out.t, out.spliceT);
+  assert.ok(Math.abs(back.sentT - 0.6) < 0.001, "in sent at " + back.sentT);
+  assert.ok(Math.abs(back.t - 0.8) < 0.001, "in splices at " + back.t);
+});
+
+test("a cue with no usable splice time stays where it arrives", () => {
+  // ok.ts carries a splice_insert whose PTS is far from its PCR, so there is
+  // no splice time to trust; the marker stays at the section.
+  const ok = inspectBytes(readFileSync(root + "/test/fixtures/ok.ts"));
+  const cue = ok.timeline.scte[0];
+  assert.equal(cue.spliceT, null);
+  assert.equal(cue.t, cue.sentT);
+});
+
 test("I-frame list is available for the filmstrip", () => {
   const ok = inspectBytes(readFileSync(root + "/test/fixtures/hrd_ok.ts"));
   assert.ok(ok.timeline.iFrames.length >= 1);

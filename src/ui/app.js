@@ -955,6 +955,11 @@ export function mount(doc, opts) {
 
   function showCue(row) {
     const bits = [row.cue === "out" ? "CUE-OUT" : "CUE-IN", "at " + row.t.toFixed(3) + " s"];
+    if (row.sentT !== undefined && row.sentT !== null) {
+      bits.push(row.spliceT === null || row.spliceT === undefined
+        ? "no splice time, shown where the section arrives"
+        : "sent at " + row.sentT.toFixed(3) + " s, " + (row.spliceT - row.sentT).toFixed(3) + " s ahead");
+    }
     if (row.label) bits.push(row.label);
     if (row.eventId !== null && row.eventId !== undefined) bits.push("event " + row.eventId);
     if (row.breakMs) bits.push("break " + (row.breakMs / 1000).toFixed(1) + " s");

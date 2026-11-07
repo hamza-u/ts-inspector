@@ -254,7 +254,7 @@ def scte_section(command_type, command, descriptors=b""):
     return blob + crc32_mpeg(blob).to_bytes(4, "big")
 
 
-def cue_section(type_id, event_id=0x10):
+def cue_section(type_id, event_id=0x10, pts=900000):
     b = Bits()
     b.w(event_id, 32)
     b.w(0, 1)
@@ -266,7 +266,7 @@ def cue_section(type_id, event_id=0x10):
     b.w(0xF, 4)
     b.w(1, 1)
     b.w(0x3F, 6)
-    b.w(900000, 33)
+    b.w(pts, 33)
     b.w(1, 1)
     b.w(0x3F, 6)
     b.w(2_700_000, 33)
@@ -279,8 +279,11 @@ def cue_section(type_id, event_id=0x10):
 
 def build_cue_pair():
     b = Builder()
-    out_section = cue_section(0x30, 0x20)
-    in_section = cue_section(0x31, 0x21)
+    # Each cue is sent 0.2 s before its splice time: out is sent at packet
+    # 20 (0.20 s) for 0.40 s, in at packet 60 (0.60 s) for 0.80 s.
+    stc = PCR_BASE // 300
+    out_section = cue_section(0x30, 0x20, stc + 36_000)
+    in_section = cue_section(0x31, 0x21, stc + 72_000)
     for i in range(80):
         slot = i % 20
         if i == 20:

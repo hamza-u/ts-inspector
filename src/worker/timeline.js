@@ -1,4 +1,5 @@
 // Markers for the bottom timeline. Times are PCR seconds from the first PCR.
+// A SCTE-35 cue sits at its splice time when the command carries one.
 // Picture ticks are capped so a long file stays a list of points.
 
 // Audio PIDs come from the PCR-level PID table, which carries the PMT stream
@@ -27,6 +28,30 @@ export function pcrSeconds(timing, packetIndex) {
   const t = (ticks - base) / 27e6;
   if (!Number.isFinite(t)) return null;
   return Math.round(t * 1e6) / 1e6;
+}
+
+const PTS_WRAP = 8589934592; // 2^33
+// A cue announced further ahead than this, or more than a second late, is
+// taken to have a PTS on some other clock; its marker stays at the section.
+const MAX_LEAD_S = 600;
+const MAX_LATE_S = 1;
+
+// Splice time on the PCR axis: the moment the STC reaches the splice PTS
+// (plus pts_adjustment). The STC at the section's own packet anchors it, so a
+// PCR wrap between the first packet and the cue does not matter. Null for a
+// splice_immediate, a component splice, or a command with no time.
+export function spliceSeconds(timing, packetIndex, sentT, command, ptsAdjustment) {
+  if (!command || command.immediate || command.pts === null || command.pts === undefined) return null;
+  if (sentT === null || sentT === undefined) return null;
+  const ticks = timing.pcrAt(packetIndex);
+  if (ticks === null || ticks === undefined) return null;
+  const stc = Math.floor(ticks / 300) % PTS_WRAP;
+  let delta = (command.pts + (ptsAdjustment || 0) - stc) % PTS_WRAP;
+  if (delta < 0) delta += PTS_WRAP;
+  if (delta > PTS_WRAP / 2) delta -= PTS_WRAP;
+  const lead = delta / 90000;
+  if (lead < -MAX_LATE_S || lead > MAX_LEAD_S) return null;
+  return Math.round((sentT + lead) * 1e6) / 1e6;
 }
 
 function scteLabel(ev, cue) {
@@ -62,8 +87,10 @@ export function buildTimeline(opts) {
   };
   const scte = [];
   for (const ev of opts.scte || []) {
-    const t = at(ev.packetIndex, ev.t);
-    if (t === null) continue;
+    const sentT = at(ev.packetIndex, ev.t);
+    if (sentT === null) continue;
+    const spliceT = spliceSeconds(timing, ev.packetIndex, sentT, ev.command, ev.ptsAdjustment);
+    const t = spliceT === null ? sentT : spliceT;
     const segs = (ev.descriptors || [])
       .map((d) => d.segmentation)
       .filter((s) => s && !s.cancel);
@@ -71,6 +98,8 @@ export function buildTimeline(opts) {
     const command = ev.command || {};
     scte.push({
       t,
+      sentT,
+      spliceT,
       pid: ev.pid,
       packetIndex: ev.packetIndex,
       label: scteLabel(ev, cueOf(typeId)),

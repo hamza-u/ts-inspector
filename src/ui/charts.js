@@ -112,16 +112,71 @@ export function hoverBin(canvas, bitrate, view, event) {
   return Math.max(x0, Math.min(x1 - 1, b));
 }
 
+// Pointer and arrow keys move a crosshair. The tooltip shows the time and the
+// nearest value of each series. Bound once per canvas; redraws use the last opts.
+function bindHover(canvas) {
+  if (canvas._linesBound || !canvas.addEventListener) return;
+  canvas._linesBound = true;
+  if (canvas.setAttribute) canvas.setAttribute("tabindex", "0");
+  const redraw = () => drawLines(canvas, canvas._lines);
+  canvas.addEventListener("pointermove", (e) => {
+    const r = canvas.getBoundingClientRect();
+    canvas._hover = { x: e.clientX - r.left, y: e.clientY - r.top };
+    redraw();
+  });
+  canvas.addEventListener("pointerleave", () => {
+    canvas._hover = null;
+    redraw();
+  });
+  canvas.addEventListener("blur", () => {
+    canvas._hover = null;
+    redraw();
+  });
+  canvas.addEventListener("keydown", (e) => {
+    const g = canvas._linesGeom;
+    if (!g) return;
+    if (e.key === "Escape") canvas._hover = null;
+    else if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+      const step = g.pw / 100;
+      const x = canvas._hover ? canvas._hover.x : g.ml;
+      const nx = x + (e.key === "ArrowRight" ? step : -step);
+      canvas._hover = { x: Math.max(g.ml, Math.min(g.ml + g.pw, nx)), y: null };
+      e.preventDefault();
+    } else return;
+    redraw();
+  });
+}
+
+function nearest(pts, x) {
+  let best = null;
+  let bd = Infinity;
+  for (const p of pts) {
+    const d = Math.abs(p[0] - x);
+    if (d < bd) { bd = d; best = p; }
+  }
+  return best;
+}
+
 export function drawLines(canvas, opts) {
   if (!canvas) return;
+  canvas._lines = opts;
+  bindHover(canvas);
   const { ctx, w, h } = fit(canvas);
+  ctx.font = "11px ui-sans-serif, sans-serif";
   const ml = 56;
   const mr = 12;
-  const mt = 16;
   const mb = 26;
+  const series = opts.series || [];
+  const named = series.filter((s) => s.name);
+  // Legend goes right of the title, or on its own row when there is no room.
+  const legW = named.length > 1
+    ? named.reduce((n, s) => n + 18 + ctx.measureText(s.name).width + 12, 0)
+    : 0;
+  const titleW = opts.title ? ctx.measureText(opts.title).width : 0;
+  const legRow = legW && ml + titleW + 16 + legW > w - mr ? 1 : 0;
+  const mt = 16 + legRow * 14;
   const pw = w - ml - mr;
   const ph = h - mt - mb;
-  const series = opts.series || [];
   let xmin = Infinity;
   let xmax = -Infinity;
   let ymin = Infinity;
@@ -139,6 +194,7 @@ export function drawLines(canvas, opts) {
     if (lim.y > ymax) ymax = lim.y;
   }
   if (!Number.isFinite(xmin)) {
+    canvas._linesGeom = null;
     ctx.clearRect(0, 0, w, h);
     ctx.fillStyle = css("--ink2");
     ctx.font = "13px ui-sans-serif, sans-serif";
@@ -149,12 +205,12 @@ export function drawLines(canvas, opts) {
   const pad = (ymax - ymin) * 0.08 || 1;
   ymin -= pad;
   ymax += pad;
+  canvas._linesGeom = { ml, pw };
   const xOf = (x) => ml + pw * ((x - xmin) / (xmax - xmin));
   const yOf = (y) => mt + ph * (1 - (y - ymin) / (ymax - ymin));
   ctx.clearRect(0, 0, w, h);
   ctx.strokeStyle = css("--grid");
   ctx.fillStyle = css("--ink2");
-  ctx.font = "11px ui-sans-serif, sans-serif";
   ctx.textAlign = "right";
   for (let k = 0; k <= 4; k++) {
     const v = ymin + (ymax - ymin) * k / 4;
@@ -174,6 +230,18 @@ export function drawLines(canvas, opts) {
     ctx.textAlign = "left";
     ctx.fillStyle = css("--ink");
     ctx.fillText(opts.title, ml, 12);
+  }
+  if (legW) {
+    let lx = w - mr - legW;
+    const ly = 12 + legRow * 14;
+    ctx.textAlign = "left";
+    for (const s of named) {
+      ctx.fillStyle = s.color;
+      ctx.fillRect(lx, ly - 7, 12, 3);
+      ctx.fillStyle = css("--ink");
+      ctx.fillText(s.name, lx + 18, ly);
+      lx += 18 + ctx.measureText(s.name).width + 12;
+    }
   }
   for (const lim of opts.limits || []) {
     const y = yOf(lim.y);
@@ -203,6 +271,59 @@ export function drawLines(canvas, opts) {
     });
     ctx.stroke();
   }
+  const hv = canvas._hover;
+  if (!hv || hv.x < ml || hv.x > ml + pw) return;
+  const tx = xmin + (hv.x - ml) / pw * (xmax - xmin);
+  const unit = opts.unit ? " " + opts.unit : "";
+  ctx.strokeStyle = css("--ink2");
+  ctx.lineWidth = 1;
+  ctx.setLineDash([3, 3]);
+  ctx.beginPath();
+  ctx.moveTo(hv.x, mt);
+  ctx.lineTo(hv.x, mt + ph);
+  ctx.stroke();
+  const inY = hv.y !== null && hv.y >= mt && hv.y <= mt + ph;
+  if (inY) {
+    ctx.beginPath();
+    ctx.moveTo(ml, hv.y);
+    ctx.lineTo(w - mr, hv.y);
+    ctx.stroke();
+  }
+  ctx.setLineDash([]);
+  const lines = [{ text: "t " + tx.toFixed(3) + " s", color: null }];
+  if (inY) {
+    const cy = ymin + (1 - (hv.y - mt) / ph) * (ymax - ymin);
+    lines.push({ text: "cursor: " + cy.toFixed(1) + unit, color: null });
+  }
+  series.forEach((s, i) => {
+    const p = nearest(s.pts, tx);
+    if (!p) return;
+    ctx.fillStyle = s.color;
+    ctx.beginPath();
+    ctx.arc(xOf(p[0]), yOf(p[1]), 3, 0, 2 * Math.PI);
+    ctx.fill();
+    lines.push({ text: (s.name || "series " + (i + 1)) + ": " + p[1].toFixed(1) + unit, color: s.color });
+  });
+  const bw = 16 + Math.max(...lines.map((l) => ctx.measureText(l.text).width)) + 12;
+  const bh = 8 + lines.length * 15;
+  let bx = hv.x + 12;
+  if (bx + bw > w - mr) bx = hv.x - 12 - bw;
+  if (bx < 0) bx = 0;
+  const by = mt + 4;
+  ctx.fillStyle = css("--panel");
+  ctx.strokeStyle = css("--edge");
+  ctx.fillRect(bx, by, bw, bh);
+  ctx.strokeRect(bx, by, bw, bh);
+  ctx.textAlign = "left";
+  lines.forEach((l, i) => {
+    const y = by + 15 + i * 15;
+    if (l.color) {
+      ctx.fillStyle = l.color;
+      ctx.fillRect(bx + 6, y - 7, 8, 3);
+    }
+    ctx.fillStyle = css("--ink");
+    ctx.fillText(l.text, bx + (l.color ? 18 : 6), y);
+  });
 }
 
 const FRAME_COLOR = { I: "#e1306c", P: "#833ab4", B: "#f77737", "?": "#a49bb3" };

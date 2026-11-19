@@ -232,7 +232,8 @@ export function mount(doc, opts) {
     const intervals = (report.timing.intervals || []).map((p) => [p.t, p.ms]);
     drawLines(el(doc, "pcr"), {
       title: "PCR interval (ms, unwrapped)",
-      series: [{ color: "#833ab4", pts: intervals }],
+      unit: "ms",
+      series: [{ name: "PCR interval", color: "#833ab4", pts: intervals }],
       empty: "No PCR interval",
     });
     const byPid = new Map();
@@ -242,12 +243,14 @@ export function mount(doc, opts) {
       byPid.get(row.pid).push([row.t, row.ms]);
     }
     const series = [...byPid.entries()].map(([pid, pts], i) => ({
+      name: "PID " + pid,
       color: PALETTE[i % PALETTE.length],
       pts,
     }));
     const fit = report.timing.fit || { maxAbsMs: 0 };
     drawLines(el(doc, "pts"), {
       title: "PTS − PCR (ms). PCR fit residual " + fit.maxAbsMs.toFixed(3) + " ms",
+      unit: "ms",
       series,
       empty: "No PTS",
     });
@@ -353,20 +356,22 @@ export function mount(doc, opts) {
       const c = hrd.counts || {};
       const sps = (hrd.sps || [])[0];
       note.textContent = "PID " + hrd.pid + (sps ? " · " + sps.profileName + " level " + sps.levelIdc : "")
-        + " · " + c.aus + " AUs · underflow " + c.underflowPlan + " · overflow " + c.overflowPlan
-        + " · joins " + c.joins;
+        + " · " + c.aus + " AUs · plan underflow " + c.underflowPlan + " · plan overflow " + c.overflowPlan
+        + " · wire lead above CPB " + (c.wireLeadOverCpb || 0) + " · joins " + c.joins;
       const cap = sps && sps.cpbMs ? sps.cpbMs : null;
       drawLines(el(doc, "hrdFull"), {
         title: "CPB fullness (%)",
-        series: [{ color: "#d6249f", pts: (hrd.fullness || []).map((p) => [p.t, p.pct]) }],
+        unit: "%",
+        series: [{ name: "Plan fullness", color: "#d6249f", pts: (hrd.fullness || []).map((p) => [p.t, p.pct]) }],
         limits: [{ y: 100, label: "CpbSize", color: "#fd5949" }],
         empty: "No fullness",
       });
       drawLines(el(doc, "hrdLead"), {
-        title: "Lead (ms)" + (cap ? " · CPB " + cap.toFixed(0) + " ms" : ""),
+        title: "First-byte lead (ms)" + (cap ? " · CPB " + cap.toFixed(0) + " ms" : ""),
+        unit: "ms",
         series: [
-          { color: "#833ab4", pts: (hrd.leads || []).map((p) => [p.t, p.plan]) },
-          { color: "#f77737", pts: (hrd.leads || []).filter((p) => p.wire !== null).map((p) => [p.t, p.wire]) },
+          { name: "Plan (HRD schedule)", color: "#833ab4", pts: (hrd.leads || []).map((p) => [p.t, p.plan]) },
+          { name: "Wire (TS arrival)", color: "#f77737", pts: (hrd.leads || []).filter((p) => p.wire !== null).map((p) => [p.t, p.wire]) },
         ],
         empty: "No lead",
       });
@@ -394,10 +399,11 @@ export function mount(doc, opts) {
       + " · Rbx " + Math.round((lim.rbxBps || 0) * 8 / 1000) + " kb/s";
     drawLines(el(doc, "tstdChart"), {
       title: "TB, MB and EB (bytes)",
+      unit: "B",
       series: [
-        { color: "#833ab4", pts: (tstd.series || []).map((p) => [p.t, p.tb]) },
-        { color: "#f77737", pts: (tstd.series || []).map((p) => [p.t, p.mb]) },
-        { color: "#d6249f", pts: (tstd.series || []).map((p) => [p.t, p.eb]) },
+        { name: "TB", color: "#833ab4", pts: (tstd.series || []).map((p) => [p.t, p.tb]) },
+        { name: "MB", color: "#f77737", pts: (tstd.series || []).map((p) => [p.t, p.mb]) },
+        { name: "EB", color: "#d6249f", pts: (tstd.series || []).map((p) => [p.t, p.eb]) },
       ],
       limits: [
         { y: lim.tbBytes, label: "TB", color: "#833ab4" },

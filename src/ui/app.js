@@ -356,8 +356,8 @@ export function mount(doc, opts) {
       const c = hrd.counts || {};
       const sps = (hrd.sps || [])[0];
       note.textContent = "PID " + hrd.pid + (sps ? " · " + sps.profileName + " level " + sps.levelIdc : "")
-        + " · " + c.aus + " AUs · underflow " + c.underflowPlan + " · overflow " + c.overflowPlan
-        + " · joins " + c.joins;
+        + " · " + c.aus + " AUs · plan underflow " + c.underflowPlan + " · plan overflow " + c.overflowPlan
+        + " · wire lead above CPB " + (c.wireLeadOverCpb || 0) + " · joins " + c.joins;
       const cap = sps && sps.cpbMs ? sps.cpbMs : null;
       drawLines(el(doc, "hrdFull"), {
         title: "CPB fullness (%)",

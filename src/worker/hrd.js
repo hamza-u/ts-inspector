@@ -53,6 +53,7 @@ export function scheduleAus(aus, opts = {}) {
     au.planLastLeadMs = lead2 * 1000;
     au.planFullnessB = full / 8;
     au.planFullnessPct = cpb ? (100 * full / cpb) : null;
+    au.cpbMs = cpb ? 1000 * cpb / rate : null;
     au.underflowPlan = taf > tr + 1 / 90000 && !low ? 1 : 0;
     au.overflowPlan = cpb !== null && cpb !== undefined && full > cpb + 8 ? 1 : 0;
   }
@@ -280,6 +281,9 @@ export function summarizeHrd(aus, joins, bps) {
     overflowPlan: 0,
     wireLeadLt0: 0,
     wireLeadLt40: 0,
+    // Not an overflow on its own: H.222.0 2.14.3.1 lets MB hold the early
+    // bytes. The T-STD result says whether they fit.
+    wireLeadOverCpb: 0,
   };
   for (const au of aus) {
     if (au.underflowPlan) counts.underflowPlan += 1;
@@ -287,6 +291,7 @@ export function summarizeHrd(aus, joins, bps) {
     if (au.wireFirstLeadMs !== null && au.wireFirstLeadMs !== undefined) {
       if (au.wireFirstLeadMs < 0) counts.wireLeadLt0 += 1;
       if (au.wireFirstLeadMs < 40) counts.wireLeadLt40 += 1;
+      if (au.cpbMs && au.wireFirstLeadMs > au.cpbMs + 1 / 90) counts.wireLeadOverCpb += 1;
     }
   }
   for (const bp of bps) {

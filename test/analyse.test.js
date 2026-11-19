@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 
 import { createBits, stripEpb } from "../src/worker/bits.js";
 import { parseSei, parseSps, splitAnnexB } from "../src/worker/h264.js";
-import { scheduleAus } from "../src/worker/hrd.js";
+import { scheduleAus, summarizeHrd } from "../src/worker/hrd.js";
 import { inspectBytes } from "../src/worker/inspect.js";
 import { hamming84, oddParityChar } from "../src/worker/teletext.js";
 import { simulateTstd, tstdLimits } from "../src/worker/tstd.js";
@@ -109,6 +109,42 @@ test("Annex C CBR chain matches a declared second buffering period", () => {
   assert.equal(aus[1].underflowPlan, 0);
   assert.equal(aus[0].overflowPlan, 0);
   assert.ok(Math.abs(aus[0].planFirstLeadMs - 400) < 0.01);
+});
+
+test("HRD counts AUs whose wire lead is above CpbSize/BitRate", () => {
+  // CpbSize 200000 / BitRate 400000 is 500 ms. The plan never goes above it.
+  const rate = 400000;
+  const cpb = 200000;
+  const sps = {
+    hrd: { scheds: [{ bitRate: rate, cpbSize: cpb, cbrFlag: 1 }] },
+    timing: { tc: 0.04 },
+    lowDelayHrdFlag: 0,
+    whichHrd: "nal",
+    bitRate: rate,
+    cpbSize: cpb,
+    cbrFlag: 1,
+  };
+  // AU 0 arrives 550 ms before DTS, AU 1 300 ms before.
+  const wire = [0.55, 0.3];
+  const aus = wire.map((early, i) => ({
+    idx: i,
+    sizeB: 1000,
+    dts: 1 + i * 0.04,
+    bp: i === 0 ? { delay: 36000, offset: 0 } : null,
+    cpbRemovalDelay: i,
+    sps,
+    discont: 0,
+    newSps: 0,
+    firstPacket: i,
+    idr: i === 0 ? 1 : 0,
+    frame: i === 0 ? "I" : "P",
+    wireFirstS: 1 + i * 0.04 - early,
+    wireLastS: 1 + i * 0.04 - early + 0.02,
+  }));
+  const { joins, bps } = scheduleAus(aus);
+  const sum = summarizeHrd(aus, joins, bps);
+  assert.equal(sum.counts.overflowPlan, 0);
+  assert.equal(sum.counts.wireLeadOverCpb, 1);
 });
 
 test("T-STD limits use the H.222.0 1200 factor and a 512-byte TB", () => {

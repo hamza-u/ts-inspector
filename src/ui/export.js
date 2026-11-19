@@ -36,7 +36,8 @@ export function reportHtml(report) {
   const hrd = report.hrd && report.hrd.modelled
     ? "<p>HRD joins: " + (report.hrd.joins || []).length
       + ". Plan underflow " + report.hrd.counts.underflowPlan
-      + ", overflow " + report.hrd.counts.overflowPlan + ".</p>"
+      + ", overflow " + report.hrd.counts.overflowPlan
+      + ". Wire lead above CPB " + (report.hrd.counts.wireLeadOverCpb || 0) + " AUs.</p>"
     : "<p>No H.264 HRD model for this file.</p>";
   const audio = (report.audio || []).filter((wave) => wave && wave.loudness && wave.loudness.measured);
   const loudness = audio.length

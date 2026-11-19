@@ -1,6 +1,6 @@
 {
   "name": "ts-inspector",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Browser inspector for MPEG-2 transport streams. Open one HTML file, drop a .ts, nothing is uploaded.",
   "license": "MIT",
   "homepage": "https://hamza-u.github.io/ts-inspector/",

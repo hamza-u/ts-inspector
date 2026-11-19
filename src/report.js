@@ -3,7 +3,7 @@
 
 export const SCHEMA = "ts-inspector-report";
 export const VERSION = 1;
-export const TOOL_VERSION = "0.1.0";
+export const TOOL_VERSION = "0.1.1";
 
 export function wrapReport(report, file) {
   return {
